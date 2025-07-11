@@ -3,19 +3,26 @@ version: 0.2
 phases:
   pre_build:
     commands:
-      - echo "Environment ready!"
-      - terraform --version
-      - ansible --version
-      - echo "Downloading dynamic tfvars from S3..."
-      - aws s3 cp s3://splunk-deployment-test/$TFVARS_S3_KEY terraform.tfvars
-      - echo "Pre-build phase complete."
+      - echo "🔧 Starting pre-build phase..."
+      - terraform --version || echo "Terraform not found!"
+      - ansible --version || echo "Ansible not found!"
+      - echo "📥 Downloading dynamic tfvars from S3..."
+      - |
+        if [ -z "$TFVARS_S3_KEY" ]; then
+          echo "❌ TFVARS_S3_KEY not set. Exiting..."
+          exit 1
+        fi
+      - aws s3 cp "s3://splunk-deployment-test/$TFVARS_S3_KEY" terraform.tfvars
+      - echo "✅ Pre-build phase complete."
 
   build:
     commands:
+      - echo "🚀 Starting build phase..."
       - chmod +x scripts/check_key.sh
       - terraform init
       - terraform apply -auto-approve
+      - echo "✅ Build phase complete."
 
   post_build:
     commands:
-      - echo "EC2 Only Deployment Completed Successfully!"
+      - echo "🎉 EC2 Only Deployment Completed Successfully!"
